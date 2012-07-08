@@ -1,0 +1,143 @@
+<html>
+	<head>
+		<title>Understanding SVG Arc Paths</title>
+		
+		<style type='text/css'>
+			div#drawing
+			{
+				border: 1px solid black;/**/
+				width: 100%;
+				height: 99.9%;
+			}
+			svg
+			{
+				/*border: 1px solid red;*/
+			}
+			pre#svgcode
+			{
+				border: 3px solid black;
+				padding: 10px;
+				font-size: 20px;
+				/*font-weight: bold;
+				font-family: arial;*/
+			}
+			span#absrel
+			{
+				border: 1px dotted grey;
+			}
+			span#large-arc-flag
+			{
+				border: 1px dotted grey;
+			}
+			span#sweep-flag
+			{
+				border: 1px dotted grey;
+			}
+		</style>
+		
+		<script type="text/javascript" src="raphael.2.1.0.js"></script>
+		
+		<script type="text/javascript">
+			var points = [
+							[150, 150,   0],
+							[ 50,  50, 120],
+							[200, 200, 240]
+						];
+			var absolute = true;
+			var largeArc = true;
+			var sweep = true;
+			
+			var body;
+							
+			window.onload = function() {
+				body = document.body;
+				
+				paper = new Raphael(document.getElementById('drawing'));
+				
+				refresh();
+			}
+			function makeOnMove(i)
+			{
+				return function(dx,dy,x,y,event)
+						{
+							points[i][0] = x - paper.canvas.offsetLeft;
+							points[i][1] = y - paper.canvas.offsetTop;
+							refresh();
+						}
+			}
+			function refresh()
+			{
+				paper.clear();
+				
+				var A, L, S, rx, ry;
+				
+				if(absolute)
+				{
+					A = 'A';
+					rx = points[2][0];
+					ry = points[2][1];
+				}
+				else
+				{
+					A = 'a';
+					rx = points[2][0] - points[0][0];
+					ry = points[2][1] - points[0][1];
+				}
+				L = (largeArc)?1:0;
+				S = (sweep)?1:0;
+				
+				var arc = paper.path("M"+points[0][0]+","+points[0][1]+
+									 A+points[1][0]+","+points[1][1]+
+							   " 0 "+L+" "+S+" "+rx+","+ry);
+							   
+				for(var i=0; i<points.length; i++)
+				{
+					var p = paper.circle(points[i][0], points[i][1], 5);
+					p.attr('fill', Raphael.hsl(points[i][2], 100, 50));
+					
+					p.drag(	makeOnMove(i),
+							null,
+							null);
+				}
+				
+				document.getElementById('svgcode').innerHTML = "&lt;path d='"+
+												 "M <span style='color:"+Raphael.hsl(points[0][2],100,50)+"'>"+points[0][0]+","+points[0][1]+"</span>"+
+												 " <span id='absrel'>"+A+"</span> "+
+													  "<span style='color:"+Raphael.hsl(points[1][2],100,50)+"'>"+points[1][0]+","+points[1][1]+"</span>"+
+												 " <span id=''>0</span>"+
+												 " <span id='large-arc-flag' title='Large Arc Flag'>"+L+"</span>"+
+												 " <span id='sweep-flag' title='Sweep Flag'>"+S+"</span> "+
+													  "<span style='color:"+Raphael.hsl(points[2][2],100,50)+"'>"+rx+","+ry+"</span>"
+												+"'/&gt;";
+				
+				document.getElementById('absrel').onclick = function()
+				{
+					absolute = !absolute;
+					document.getElementById(((absolute)?'absolute':'relative')+'Button').checked = true;
+					refresh();
+				}
+				document.getElementById('large-arc-flag').onclick = function()
+				{
+					largeArc = !largeArc;
+					document.getElementById('largeArcButton').checked = largeArc;
+					refresh();
+				}
+				document.getElementById('sweep-flag').onclick = function()
+				{
+					sweep = !sweep;
+					document.getElementById('sweepButton').checked = sweep;
+					refresh();
+				}
+			}
+		</script>
+	</head>
+	<body id="b">
+		<pre id='svgcode'></pre>
+		<p>Arc type: Absolute <input type='radio' id='absoluteButton' name='absrelButton' onclick='absolute=true;refresh();' value='absolute' checked='checked' />
+					 Relative <input type='radio' id='relativeButton' name='absrelButton' onclick='absolute=false;refresh();' value='relative' />
+		Large arc flag: <input type='checkbox' id='largeArcButton' name='largeArcButton' checked='checked' onclick='largeArc=this.checked;refresh();' />
+		Sweep flag: <input type='checkbox' id='sweepButton' name='sweepButton' checked='checked' onclick='sweep=this.checked;refresh();' /></p>
+		<div id='drawing'>
+		</div>
+	</body>
+</html>
