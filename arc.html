@@ -20,6 +20,7 @@
 				font-size: 20px;
 				/*font-weight: bold;
 				font-family: arial;*/
+				clear: both;
 			}
 			span#absrel
 			{
@@ -32,6 +33,23 @@
 			span#sweep-flag
 			{
 				border: 1px dotted grey;
+			}
+
+			div#explanation
+			{
+				width: 45%;
+				float: left;
+				border: 1px solid black;
+				padding: 10px;
+				margin-bottom: 10px;
+			}
+			div#knownissues
+			{
+				width: 45%;
+				float: right;
+				border: 1px solid black;
+				padding: 10px;
+				margin-bottom: 10px;
 			}
 		</style>
 		
@@ -132,6 +150,26 @@
 		</script>
 	</head>
 	<body id="b">
+		<div id='explanation'>
+			<h1>Understanding SVG Arc Paths</h1>
+			<p>SVG provides a tag that allows you to describe a line of shape by a number of co-ordinates. As well as just providing a list of all the points linked together by lines, there are sytaxes for drawing curves parametrically. One of these is the arc.</p>
+			<p>The arc has a number of parameters, including a co-ordinate pair, the size of the ellipse being described, an angle and two flags that alter the rendering. This example also allows you to modify whether the arc co-ordinates are absolute (A) or relative (a), to the starting point (defined by the red blob).</p>
+			<p>This example currently does not allow editing the angle (coming soon, hopefully!)</p>
+		</div>
+		<div id='knownissues'>
+			<p>Works in
+				<ul>
+					<li>Google Chrome Version 20.0.1132.47</li>
+					<li>Safari Version 5.1.7 (6534.57.2)</li>
+				</ul>
+			</p>
+			<p>Does not work in
+				<ul>
+					<li>Opera v12.00 b1467</li>
+					<li>Firefox 13.0.1</li>
+				</ul>
+			</p>
+		</div>
 		<pre id='svgcode'></pre>
 		<p>Arc type: Absolute <input type='radio' id='absoluteButton' name='absrelButton' onclick='absolute=true;refresh();' value='absolute' checked='checked' />
 					 Relative <input type='radio' id='relativeButton' name='absrelButton' onclick='absolute=false;refresh();' value='relative' />
