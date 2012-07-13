@@ -55,16 +55,25 @@
 		</style>
 		
 		<script type="text/javascript" src="raphael.2.1.0.js"></script>
+		<script type="text/javascript" src="sylvester.js"></script>
 		
 		<script type="text/javascript">
-			var points = [
+			/*var points = [
 							[150, 150,   0],
 							[ 50,  50, 120],
 							[200, 200, 240]
+						];*/
+			var points = [
+							[150, 150,   0],
+							[ 76,  55, 120],
+							[433, 278, 240]
 						];
 			var absolute = true;
 			var largeArc = true;
 			var sweep = true;
+			
+			var Cx = 0;
+			var Cy = 0;
 			
 			var body;
 							
@@ -88,26 +97,96 @@
 			{
 				paper.clear();
 				
-				var A, L, S, rx, ry;
+				var A, L, S, ex, ey;
 				
 				if(absolute)
 				{
 					A = 'A';
-					rx = points[2][0];
-					ry = points[2][1];
+					ex = points[2][0];
+					ey = points[2][1];
 				}
 				else
 				{
 					A = 'a';
-					rx = points[2][0] - points[0][0];
-					ry = points[2][1] - points[0][1];
+					ex = points[2][0] - points[0][0];
+					ey = points[2][1] - points[0][1];
 				}
 				L = (largeArc)?1:0;
 				S = (sweep)?1:0;
+
+
+				// Calculate the centre of the ellipse
+				// Based on http://www.w3.org/TR/SVG/implnote.html#ArcConversionEndpointToCenter
+				var x1 = points[0][0];
+				var y1 = points[0][1];
+				var x2 = points[2][0];
+				var y2 = points[2][1];
+				var fA = L;
+				var fS = S;
+				var rx = points[1][0];
+				var ry = points[1][1];
+				var phi = 0;
+				
+				// Step 1: Compute (x1′, y1′)
+				var M = $M([
+								[ Math.cos(phi), Math.sin(phi)],
+								[-Math.sin(phi), Math.cos(phi)]
+							]);
+				var V = $V( [ (x1-x2)/2, (y1-y2)/2 ] );
+				var P = M.multiply(V);
+				
+				var x1p = P.e(1);
+				var y1p = P.e(2);
+
+
+				// Ensure radii are large enough
+				// Step 1: Ensure radii are non-zero
+				// Step 2: Ensure radii are positive
+				rx = Math.abs(rx);
+				ry = Math.abs(ry);
+				// Step 3: Ensure radii are large enough
+				var lambda = ( (x1p * x1p) / (rx * rx) ) + ( (y1p * y1p) / (ry * ry) );
+				if(lambda > 1)
+				{
+					rx = Math.sqrt(lambda) * rx;
+					ry = Math.sqrt(lambda) * ry;
+				}
+				
+				
+				// Step 2: Compute (cx′, cy′)
+				var sign = (fA == fS)? -1 : 1;
+				// Bit of a hack, as presumably rounding errors were making his negative inside the square root!
+				if((( (rx*rx*ry*ry) - (rx*rx*y1p*y1p) - (ry*ry*x1p*x1p) ) / ( (rx*rx*y1p*y1p) + (ry*ry*x1p*x1p) )) < 1e-7)
+					var co = 0;
+				else
+					var co = sign * Math.sqrt( ( (rx*rx*ry*ry) - (rx*rx*y1p*y1p) - (ry*ry*x1p*x1p) ) / ( (rx*rx*y1p*y1p) + (ry*ry*x1p*x1p) ) );
+				var V = $V( [rx*y1p/ry, -ry*x1p/rx] );
+				var Cp = V.multiply(co);
+
+				// Step 3: Compute (cx, cy) from (cx′, cy′)
+				var M = $M([
+								[ Math.cos(phi), -Math.sin(phi)],
+								[ Math.sin(phi),  Math.cos(phi)]
+							]);
+				var V = $V( [ (x1+x2)/2, (y1+y2)/2 ] );
+				var C = M.multiply(Cp).add(V);
+				//console.log(C.elements);
+				
+				Cx = C.e(1);
+				Cy = C.e(2);
+				
+				// Box for radii of the ellipse
+				var box = paper.rect(Cx,Cy-points[1][1], points[1][0],points[1][1]);
+				var adjbox = paper.rect(Cx,Cy-ry, rx,ry);
+				var centre = paper.circle(Cx, Cy, 3);
+				
+
+
 				
 				var arc = paper.path("M"+points[0][0]+","+points[0][1]+
 									 A+points[1][0]+","+points[1][1]+
-							   " 0 "+L+" "+S+" "+rx+","+ry);
+							   " 0 "+L+" "+S+" "+ex+","+ey);
+				arc.attr('stroke-width', 3);
 
 				var box = paper.rect(0,0, points[1][0],points[1][1]);
 							   
@@ -128,7 +207,7 @@
 												 " <span id=''>0</span>"+
 												 " <span id='large-arc-flag' title='Large Arc Flag'>"+L+"</span>"+
 												 " <span id='sweep-flag' title='Sweep Flag'>"+S+"</span> "+
-													  "<span style='color:"+Raphael.hsl(points[2][2],100,50)+"'>"+rx+","+ry+"</span>"
+													  "<span style='color:"+Raphael.hsl(points[2][2],100,50)+"'>"+ex+","+ey+"</span>"
 												+"'/&gt;";
 				
 				document.getElementById('absrel').onclick = function()
