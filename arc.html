@@ -88,8 +88,9 @@
 			{
 				return function(dx,dy,x,y,event)
 						{
-							points[i][0] = x - paper.canvas.offsetLeft;
-							points[i][1] = y - paper.canvas.offsetTop;
+							var offset = paper.canvas.getBoundingClientRect()
+							points[i][0] = x - offset.left;
+							points[i][1] = y - offset.top;
 							refresh();
 						}
 			}
